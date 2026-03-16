@@ -30,7 +30,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release \
          -DUSE_SYSTEM_NCCL=ON \
          -DCMAKE_INSTALL_PREFIX=/opt/libtorch
 cmake --build . -j8
-cmake --install .
+sudo cmake --install .
 ```
 If you encountered issue, try to add the following in your `~/.bashrc` before build the libtorch
 ```bash
@@ -41,12 +41,36 @@ export C_INCLUDE_PATH=/usr/local/cuda/include:$C_INCLUDE_PATH
 export LIBRARY_PATH=/usr/local/cuda/lib64:$LIBRARY_PATH
 ```
 
+```bash
+sudo tee /etc/profile.d/cuda-tensorrt.sh << 'EOF'
+export PATH=/usr/local/cuda/bin:/usr/src/tensorrt/bin${PATH:+:$PATH}
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+export CPATH=/usr/local/cuda/include${CPATH:+:$CPATH}
+export C_INCLUDE_PATH=/usr/local/cuda/include${C_INCLUDE_PATH:+:$C_INCLUDE_PATH}
+export LIBRARY_PATH=/usr/local/cuda/lib64${LIBRARY_PATH:+:$LIBRARY_PATH}
+EOF
+```
+
+
 ## Point to your custom libtorch installation
 Add the following to your `~/.bashrc` file
 ```bash
 export Torch_DIR="/opt/libtorch/share/cmake/Torch"
 export LD_LIBRARY_PATH="/opt/libtorch/lib:$LD_LIBRARY_PATH"
 ```
+
+# Add library path permanently
+echo '/opt/libtorch/lib' | sudo tee /etc/ld.so.conf.d/libtorch.conf
+sudo ldconfig
+
+# Add environment variables system-wide
+sudo tee /etc/profile.d/libtorch.sh << 'EOF'
+export Torch_DIR=/opt/libtorch/share/cmake/Torch
+export LD_LIBRARY_PATH=/opt/libtorch/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+EOF
+
+# Apply to current session
+source /etc/profile.d/libtorch.sh
 
 ### Build LibTorchVision
 ```bash
@@ -59,12 +83,24 @@ cmake .. -DCMAKE_BUILD_TYPE=Release \
          -DCMAKE_PREFIX_PATH=/opt/libtorch \
          -DCMAKE_INSTALL_PREFIX=/opt/libtorchvision
 cmake --build . -j8
-cmake --install .
+sudo cmake --install .
 ```
 
-## Point to your custom libtorchvision installation
-Add the following to your `~/.bashrc` file
+# Add library path permanently
 ```bash
-export TorchVision_DIR="/opt/libtorchvision/share/cmake/TorchVision"
-export LD_LIBRARY_PATH="/opt/libtorchvision/lib:$LD_LIBRARY_PATH"
+echo '/opt/libtorchvision/lib' | sudo tee /etc/ld.so.conf.d/libtorchvision.conf
+sudo ldconfig
+```
+
+# Add environment variables system-wide
+```bash
+sudo tee /etc/profile.d/libtorchvision.sh << 'EOF'
+export TorchVision_DIR=/opt/libtorchvision/share/cmake/TorchVision
+export LD_LIBRARY_PATH=/opt/libtorchvision/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+EOF
+```
+
+# Apply to current session
+```bash
+source /etc/profile.d/libtorchvision.sh
 ```
